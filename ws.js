@@ -1,12 +1,24 @@
 const WebSocket = require('ws');
-const moment = require('moment');
 const pako = require('pako');
 const chalk = require('chalk');
+const mongoose = require('mongoose');
 
 const log = console.log;
 
 // Ws URL
 const WS_URL = 'wss://api.huobi.pro/hbus/ws';
+
+// DB Config
+const db = require('./config/keys').mongoURI;
+
+// Bring in MarketDepth model
+const MarketDepth = require('./models/MarketDepth');
+
+// Connect to MongoDB
+mongoose
+    .connect(db, { useNewUrlParser: true })
+    .then(() => log('MongoDB Connected'))
+    .catch(err => log(err));
 
 /**
  * Subscribe to symbols
@@ -50,10 +62,26 @@ function init() {
                 pong: msg.ping
             }));
         } else if (msg.tick) {
-            log(chalk.cyan("Id: ") + msg.ch);
-            log(chalk.cyan("Timestamp: ") + msg.ts);
-            log(chalk.cyan("Bids: ") + msg.tick.bids)
-            log(chalk.cyan("Asks: ") + msg.tick.asks); // log data (bids & asks)
+
+            // Create new mongoose model
+            const newMarketDepth = new MarketDepth({
+                id: msg.ch,
+                time:  msg.ts,
+                numA: msg.tick.asks.length,
+                numB: msg.tick.bids.length
+                //asks: msg.tick.asks,
+                //bids: msg.tick.bids
+            });
+
+            // Save model to mongoDB
+            newMarketDepth.save().then(marketDepth => marketDepth);
+
+            log(chalk.yellow("Id: ") + chalk.magenta(msg.ch));
+            log(chalk.yellow("Timestamp: ") + chalk.magenta(msg.ts));
+            log(chalk.yellow("Bids Num: ") + chalk.magenta(msg.tick.bids.length));
+            //log(chalk.yellow("Bids: ") + msg.tick.bids);
+            log(chalk.yellow("Asks Num: ") + chalk.magenta(msg.tick.asks.length));
+            //log(chalk.yellow("Asks: ") + msg.tick.asks);
         } else {
             log(text);
         }
