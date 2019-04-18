@@ -4,22 +4,26 @@ const Schema = mongoose.Schema;
 // Create MarketDepth Schema
 const MarketDepthSchema = new Schema({
     id: {
-        type: String
+        type: String,
+        required: true
     },
     time: {
-        type: String
+        type: String,
+        required: true
     },
     numA: {
-        type: String
+        type: String,
+        required: true
     },
     numB: {
-        type: String
+        type: String,
+        required: true
     },
     asks: {
-        type: String,
+        type: [],
     },
     bids: {
-        type: String,
+        type: [],
     }
 });
 

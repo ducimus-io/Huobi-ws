@@ -68,9 +68,9 @@ function init() {
                 id: msg.ch,
                 time:  msg.ts,
                 numA: msg.tick.asks.length,
-                numB: msg.tick.bids.length
-                //asks: msg.tick.asks,
-                //bids: msg.tick.bids
+                numB: msg.tick.bids.length,
+                asks: msg.tick.asks,
+                bids: msg.tick.bids
             });
 
             // Save model to mongoDB
@@ -79,9 +79,9 @@ function init() {
             log(chalk.yellow("Id: ") + chalk.magenta(msg.ch));
             log(chalk.yellow("Timestamp: ") + chalk.magenta(msg.ts));
             log(chalk.yellow("Bids Num: ") + chalk.magenta(msg.tick.bids.length));
-            //log(chalk.yellow("Bids: ") + msg.tick.bids);
+            log(chalk.yellow("Bids: ") + msg.tick.bids);
             log(chalk.yellow("Asks Num: ") + chalk.magenta(msg.tick.asks.length));
-            //log(chalk.yellow("Asks: ") + msg.tick.asks);
+            log(chalk.yellow("Asks: ") + msg.tick.asks);
         } else {
             log(text);
         }
