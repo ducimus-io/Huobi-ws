@@ -1,31 +1,18 @@
 const WebSocket = require('ws');
 const moment = require('moment');
 const pako = require('pako');
+const chalk = require('chalk');
+
+const log = console.log;
 
 // Ws URL
-const WS_URL = 'wss://api.huobi.pro/ws';
+const WS_URL = 'wss://api.huobi.pro/hbus/ws';
 
-var orderbook = {};
-
-exports.OrderBook = orderbook;
-
-function handle(data) {
-    //console.log('received', data.ch, 'data.ts', data.ts, 'crawler.ts', moment().format('x'));
-    let symbol = data.ch.split('.')[1];
-    let channel = data.ch.split('.')[2];
-    switch (channel) {
-        case 'depth':
-            orderbook[symbol] = data.tick;
-            break;
-        case 'kline':
-            console.log('kline', data.tick);
-            break;
-    }
-}
-
-// Subscribe to symbols
+/**
+ * Subscribe to symbols
+ */
 function subscribe(ws) {
-    var symbols = ['ethbtc', 'bnbbtc'];
+    var symbols = ['ethbtc', 'btcusdt'];
     
     for (let symbol of symbols) {
         ws.send(JSON.stringify({
@@ -33,25 +20,25 @@ function subscribe(ws) {
             "id": `${symbol}`
         }));
     }
-
-    for (let symbol of symbols) {
-        ws.send(JSON.stringify({
-            "sub": `market.${symbol}.kline.1min`,
-            "id": `${symbol}`
-        }));
-    }
 }
 
+/**
+ * Initialize Websocket Connection
+ */
 function init() {
     // Init websocket
     var ws = new WebSocket(WS_URL);
 
+    // onOpen event - subscribe to symbols
     ws.on('open', () => {
-        console.log('open');
+        log('open');
         subscribe(ws);
     });
 
+    // Handle data
     ws.on('message', (data) => {
+
+        // Unzip data 
         let text = pako.inflate(data, {
             to: 'string'
         });
@@ -63,19 +50,25 @@ function init() {
                 pong: msg.ping
             }));
         } else if (msg.tick) {
-            // console.log(msg);
-            handle(msg);
+            log(chalk.cyan("Id: ") + msg.ch);
+            log(chalk.cyan("Timestamp: ") + msg.ts);
+            log(chalk.cyan("Bids: ") + msg.tick.bids)
+            log(chalk.cyan("Asks: ") + msg.tick.asks); // log data (bids & asks)
         } else {
-            console.log(text);
+            log(text);
         }
     });
+
+    // onClose event
     ws.on('close', () => {
-        console.log('close');
-        init();
+        log(chalk.red('Websocket closed! Trying to reconnect...'));
+        init(); // start connection again
     });
+
+    // onError event
     ws.on('error', err => {
-        console.log('error', err);
-        init();
+        log(chalk.red('Websocket error: ', err));
+        init(); // start connection again
     });
 }
 
